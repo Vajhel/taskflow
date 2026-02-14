@@ -45,7 +45,7 @@
 ### Запуск
 
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/Vajhel/taskflow.git
 cd newtest
 docker-compose up --build
 ```
