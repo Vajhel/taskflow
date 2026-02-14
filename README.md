@@ -46,7 +46,7 @@
 
 ```bash
 git clone https://github.com/Vajhel/taskflow.git
-cd newtest
+cd taskflow
 docker-compose up --build
 ```
 
