@@ -1,0 +1,170 @@
+services:
+  # ===========================================
+  # База данных PostgreSQL
+  # ===========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskflow_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskflow_network
+
+  # ===========================================
+  # Микросервис аутентификации (auth_service)
+  # ===========================================
+  auth_service:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+    container_name: taskflow_auth
+    environment:
+      - DB_NAME=auth_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - SECRET_KEY=auth-secret-key-2026
+      - JWT_SECRET=taskflow-jwt-shared-secret-2026
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+    volumes:
+      - auth_logs:/var/log/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      taskflow_network:
+        aliases:
+          - auth-service
+
+  # ===========================================
+  # Микросервис управления задачами (task_service)
+  # ===========================================
+  task_service:
+    build:
+      context: ./task_service
+      dockerfile: Dockerfile
+    container_name: taskflow_tasks
+    environment:
+      - DB_NAME=tasks_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - SECRET_KEY=task-secret-key-2026
+      - JWT_SECRET=taskflow-jwt-shared-secret-2026
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8000
+    volumes:
+      - task_logs:/var/log/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+    networks:
+      taskflow_network:
+        aliases:
+          - task-service
+
+  # ===========================================
+  # Микросервис уведомлений (notification_service)
+  # ===========================================
+  notification_service:
+    build:
+      context: ./notification_service
+      dockerfile: Dockerfile
+    container_name: taskflow_notifications
+    environment:
+      - DB_NAME=notifications_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - SECRET_KEY=notif-secret-key-2026
+      - JWT_SECRET=taskflow-jwt-shared-secret-2026
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+    volumes:
+      - notification_logs:/var/log/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      taskflow_network:
+        aliases:
+          - notification-service
+
+  # ===========================================
+  # Frontend (веб-интерфейс)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskflow_frontend
+    environment:
+      - SECRET_KEY=frontend-secret-key-2026
+      - JWT_SECRET=taskflow-jwt-shared-secret-2026
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - TASK_SERVICE_URL=http://task-service:8000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8000
+    volumes:
+      - frontend_logs:/var/log/app
+      - static_files:/app/staticfiles
+    depends_on:
+      - auth_service
+      - task_service
+      - notification_service
+    networks:
+      - taskflow_network
+
+  # ===========================================
+  # Nginx (обратный прокси-сервер)
+  # ===========================================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: taskflow_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - static_files:/static
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - frontend
+      - auth_service
+      - task_service
+      - notification_service
+    networks:
+      - taskflow_network
+
+volumes:
+  postgres_data:
+  auth_logs:
+  task_logs:
+  notification_logs:
+  frontend_logs:
+  static_files:
+  nginx_logs:
+
+networks:
+  taskflow_network:
+    driver: bridge

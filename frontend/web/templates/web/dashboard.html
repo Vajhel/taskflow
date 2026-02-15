@@ -1,0 +1,103 @@
+{% extends 'web/base.html' %}
+{% block title %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">
+        <i class="bi bi-speedometer2 me-2"></i>Панель управления
+    </h2>
+    <span class="text-muted">{{ user.first_name }} {{ user.last_name }}</span>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card p-3 text-center">
+            <div class="display-6 text-primary fw-bold">{{ projects|length }}</div>
+            <div class="text-muted">Проектов</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3 text-center">
+            <div class="display-6 text-success fw-bold">{{ my_tasks|length }}</div>
+            <div class="text-muted">Моих задач</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3 text-center">
+            <div class="display-6 text-warning fw-bold">{{ unread_count }}</div>
+            <div class="text-muted">Уведомлений</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3 text-center">
+            <a href="{% url 'task-create' %}" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-plus-lg me-1"></i> Новая задача
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Проекты</h5>
+                <a href="{% url 'projects' %}" class="btn btn-sm btn-outline-primary">Все проекты</a>
+            </div>
+            <div class="card-body p-0">
+                {% if projects %}
+                <div class="list-group list-group-flush">
+                    {% for project in projects|slice:":5" %}
+                    <a href="{% url 'project-detail' project.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ project.name }}</strong>
+                            <br><small class="text-muted">Задач: {{ project.tasks_count|default:0 }}</small>
+                        </div>
+                        <span class="badge bg-{% if project.status == 'active' %}success{% elif project.status == 'planning' %}secondary{% elif project.status == 'completed' %}primary{% else %}warning{% endif %}">
+                            {{ project.status }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-folder-plus display-6"></i>
+                    <p class="mt-2">Нет проектов. <a href="{% url 'projects' %}">Создать первый проект</a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Мои задачи</h5>
+                <a href="{% url 'tasks' %}" class="btn btn-sm btn-outline-primary">Все задачи</a>
+            </div>
+            <div class="card-body p-0">
+                {% if my_tasks %}
+                <div class="list-group list-group-flush">
+                    {% for task in my_tasks|slice:":5" %}
+                    <a href="{% url 'task-detail' task.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ task.title }}</strong>
+                            <div>
+                                <span class="badge badge-{{ task.priority }}">{{ task.priority }}</span>
+                                <span class="badge badge-{{ task.status }}">{{ task.status }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-clipboard-check display-6"></i>
+                    <p class="mt-2">Нет назначенных задач</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'web/base.html' %}
+{% block title %}Регистрация{% endblock %}
+
+{% block public_content %}
+<div class="min-vh-100 d-flex align-items-center" style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card p-4">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold"><i class="bi bi-kanban"></i> TaskFlow</h3>
+                        <p class="text-muted">Создайте аккаунт</p>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Имя пользователя *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Пароль *</label>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="8">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password_confirm" class="form-label">Подтверждение *</label>
+                                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required minlength="8">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="bi bi-person-plus me-2"></i> Зарегистрироваться
+                        </button>
+                        <p class="text-center text-muted">
+                            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
